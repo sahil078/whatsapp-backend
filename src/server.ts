@@ -19,7 +19,12 @@ async function main() {
   
   // Attach Socket.IO to the same server
   const io = new SocketIOServer(httpServer, {
-    cors: { origin: process.env.ORIGIN?.split(",") ?? "*" }
+    cors: {
+      origin: true,
+      credentials: true,
+      methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+      allowedHeaders: ["Content-Type", "Authorization"],
+    }
   });
   console.log("Socket.IO attached");
 
