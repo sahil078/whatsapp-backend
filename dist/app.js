@@ -9,7 +9,29 @@ import webhookRoute from "./routes/webhook.routes.js";
 export function buildApp() {
     const app = express();
     app.use(helmet());
-    app.use(cors({ origin: process.env.ORIGIN?.split(",") ?? true, credentials: true }));
+    const envOrigins = (process.env.ORIGIN || "")
+        .split(",")
+        .map(s => s.trim())
+        .filter(Boolean);
+    const defaultOrigins = [
+        "http://localhost:3000",
+        "https://whats-app-chat-bice.vercel.app"
+    ];
+    const allowedOriginsSet = new Set([...defaultOrigins, ...envOrigins]);
+    const corsOptions = {
+        origin(origin, callback) {
+            if (!origin)
+                return callback(null, true);
+            if (allowedOriginsSet.has(origin))
+                return callback(null, true);
+            return callback(null, false);
+        },
+        credentials: true,
+        methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        allowedHeaders: ["Content-Type", "Authorization"],
+    };
+    app.use(cors(corsOptions));
+    app.options("*", cors(corsOptions));
     app.use(express.json({ limit: "1mb" }));
     app.use(httpLogger);
     // Health check

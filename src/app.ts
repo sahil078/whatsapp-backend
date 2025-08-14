@@ -1,6 +1,6 @@
 import express from "express";
 import helmet from "helmet";
-import cors, { CorsOptions } from "cors";
+import cors, { CorsOptions, CorsRequest } from "cors";
 import { httpLogger } from "./utils/logger.js";
 import { notFound, errorHandler } from "./middlewares/error.middleware.js";
 import conversationsRoute from "./routes/conversations.routes.js";
@@ -12,15 +12,29 @@ export function buildApp() {
   const app = express();
   app.use(helmet());
 
+  const envOrigins = (process.env.ORIGIN || "")
+    .split(",")
+    .map(s => s.trim())
+    .filter(Boolean);
+  const defaultOrigins = [
+    "http://localhost:3000",
+    "https://whats-app-chat-bice.vercel.app/"
+  ];
+  const allowedOriginsSet = new Set<string>([...defaultOrigins, ...envOrigins]);
+
   const corsOptions: CorsOptions = {
-    origin: true,
+    origin(origin, callback) {
+      if (!origin) return callback(null, true);
+      if (allowedOriginsSet.has(origin)) return callback(null, true);
+      return callback(null, false);
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   };
 
   app.use(cors(corsOptions));
-  app.options("*", cors(corsOptions));
+  app.options("*", cors(corsOptions as any));
 
   app.use(express.json({ limit: "1mb" }));
   app.use(httpLogger);

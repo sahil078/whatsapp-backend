@@ -18,9 +18,19 @@ async function main() {
   const httpServer = createServer(app);
   
   // Attach Socket.IO to the same server
+  const envOrigins = (process.env.ORIGIN || "")
+    .split(",")
+    .map(s => s.trim())
+    .filter(Boolean);
+  const defaultOrigins = [
+    "http://localhost:3000",
+    "https://whats-app-chat-bice.vercel.app/"
+  ];
+  const allowedOrigins = [...new Set([...defaultOrigins, ...envOrigins])];
+
   const io = new SocketIOServer(httpServer, {
     cors: {
-      origin: true,
+      origin: allowedOrigins,
       credentials: true,
       methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
       allowedHeaders: ["Content-Type", "Authorization"],

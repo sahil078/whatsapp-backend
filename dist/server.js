@@ -13,8 +13,22 @@ async function main() {
     // Create HTTP server with Express app
     const httpServer = createServer(app);
     // Attach Socket.IO to the same server
+    const envOrigins = (process.env.ORIGIN || "")
+        .split(",")
+        .map(s => s.trim())
+        .filter(Boolean);
+    const defaultOrigins = [
+        "http://localhost:3000",
+        "https://whats-app-chat-bice.vercel.app/"
+    ];
+    const allowedOrigins = [...new Set([...defaultOrigins, ...envOrigins])];
     const io = new SocketIOServer(httpServer, {
-        cors: { origin: process.env.ORIGIN?.split(",") ?? "*" }
+        cors: {
+            origin: allowedOrigins,
+            credentials: true,
+            methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+            allowedHeaders: ["Content-Type", "Authorization"],
+        }
     });
     console.log("Socket.IO attached");
     // Now mount routes that need io
